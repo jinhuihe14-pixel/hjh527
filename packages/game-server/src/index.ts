@@ -280,12 +280,13 @@ setInterval(() => {
   roomManager.cleanupEmptyRooms();
 }, 30000);
 
-const PORT = process.env.GAME_SERVER_PORT || 3001;
+const PORT = process.env.GAME_SERVER_PORT || 9527;
+const HOST = process.env.GAME_SERVER_HOST || '127.0.0.1';
 
-server.listen(PORT, () => {
-  console.log(`🎮 Game Server running on port ${PORT}`);
-  console.log(`   WebSocket: ws://localhost:${PORT}`);
-  console.log(`   Health: http://localhost:${PORT}/health`);
+server.listen(PORT, HOST, () => {
+  console.log(`🎮 Game Server running on ${HOST}:${PORT}`);
+  console.log(`   WebSocket: ws://${HOST}:${PORT}`);
+  console.log(`   Health: http://${HOST}:${PORT}/health`);
 });
 
 export { io, roomManager, anticheatSystem, logger };

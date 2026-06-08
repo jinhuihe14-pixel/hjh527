@@ -6,7 +6,14 @@ import {
   ItemType,
   ItemRarity,
   SkillType,
-  EntityType
+  EntityType,
+  TaskType,
+  TaskStatus,
+  TaskConditionType,
+  AchievementCategory,
+  AchievementStatus,
+  LeaderboardType,
+  GameFeature
 } from './enums';
 
 export interface Vector2 {
@@ -228,4 +235,112 @@ export interface AuditLogEntry {
   targetId: string;
   details: Record<string, any>;
   timestamp: number;
+}
+
+export interface TaskConfig {
+  id: string;
+  name: string;
+  description: string;
+  type: TaskType;
+  conditionType: TaskConditionType;
+  targetValue: number;
+  rewards: TaskReward[];
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface TaskReward {
+  type: 'coins' | 'diamonds' | 'exp' | 'item';
+  itemId?: string;
+  amount: number;
+}
+
+export interface PlayerTask {
+  taskId: string;
+  status: TaskStatus;
+  progress: number;
+  claimedAt?: number;
+  completedAt?: number;
+  periodKey: string;
+}
+
+export interface AchievementConfig {
+  id: string;
+  name: string;
+  description: string;
+  category: AchievementCategory;
+  conditionType: string;
+  targetValue: number;
+  rewards: AchievementReward[];
+  badge?: string;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: number;
+}
+
+export interface AchievementReward {
+  type: 'coins' | 'diamonds' | 'exp' | 'item' | 'title';
+  itemId?: string;
+  title?: string;
+  amount?: number;
+}
+
+export interface PlayerAchievement {
+  achievementId: string;
+  status: AchievementStatus;
+  progress: number;
+  unlockedAt?: number;
+  claimedAt?: number;
+}
+
+export interface WeeklyRankEntry {
+  userId: string;
+  nickname: string;
+  avatar: string;
+  rankTier: RankTier;
+  rankPoints: number;
+  weekPoints: number;
+  wins: number;
+  winRate: number;
+  rank: number;
+}
+
+export interface RankArchive {
+  id: string;
+  periodType: 'weekly' | 'monthly' | 'seasonal';
+  periodKey: string;
+  type: LeaderboardType;
+  entries: LeaderboardEntry[];
+  archivedAt: number;
+}
+
+export interface GameplayStats {
+  totalTasksCompleted: number;
+  dailyTasksCompleted: number;
+  weeklyTasksCompleted: number;
+  totalAchievementsUnlocked: number;
+  activeTaskUsers: number;
+  activeAchievementUsers: number;
+  taskCompletionRate: number;
+  achievementUnlockRate: number;
+}
+
+export interface FeatureConfig {
+  [GameFeature.TASKS]: boolean;
+  [GameFeature.ACHIEVEMENTS]: boolean;
+  [GameFeature.WEEKLY_RANK]: boolean;
+  [GameFeature.SHOP]: boolean;
+  [GameFeature.RANKED]: boolean;
+}
+
+export interface ConfigBackup {
+  id: string;
+  configKey: string;
+  version: number;
+  data: Record<string, any>;
+  createdAt: number;
+  createdBy?: string;
+  note?: string;
 }

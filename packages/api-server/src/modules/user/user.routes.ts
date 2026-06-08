@@ -105,7 +105,7 @@ router.post('/login', (req: AuthRequest, res: Response) => {
     return res.status(401).json({ error: '用户名或密码错误' });
   }
 
-  dataStore.updateUser(user.id, { lastLogin: Date.now() });
+  dataStore.recordLogin(user.id);
   const token = generateToken(user.id);
   const rankRecord = dataStore.getRankRecord(user.id);
 

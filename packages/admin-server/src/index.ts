@@ -225,7 +225,7 @@ app.post('/api/admin/shop', authMiddleware, async (req: AdminRequest, res: Respo
       return res.status(400).json({ success: false, message: result.message })
     }
 
-    adminDataStore.addAuditLog(req.admin!.id, 'shop_item_add', 'shop_item', result.itemId, item)
+    adminDataStore.addAuditLog(req.admin!.id, 'shop_item_add', 'shop_item', result.itemId!, item)
 
     res.json({ success: true, message: '商品添加成功', itemId: result.itemId })
   } catch (error) {
@@ -359,6 +359,267 @@ app.get('/api/admin/audit-logs', authMiddleware, async (req: AdminRequest, res: 
     res.json({ success: true, ...result })
   } catch (error) {
     console.error('获取审计日志错误:', error)
+    res.status(500).json({ success: false, message: '服务器内部错误' })
+  }
+})
+
+app.get('/api/admin/tasks', authMiddleware, async (req: AdminRequest, res: Response) => {
+  try {
+    const { page = 1, pageSize = 20, type = '', isActive = '' } = req.query as any
+    const result = adminDataStore.getTasks({
+      page: parseInt(page),
+      pageSize: parseInt(pageSize),
+      type: type || undefined,
+      isActive: isActive !== '' ? isActive === 'true' : undefined,
+    })
+    res.json({ success: true, ...result })
+  } catch (error) {
+    console.error('获取任务列表错误:', error)
+    res.status(500).json({ success: false, message: '服务器内部错误' })
+  }
+})
+
+app.get('/api/admin/tasks/:taskId', authMiddleware, async (req: AdminRequest, res: Response) => {
+  try {
+    const { taskId } = req.params
+    const task = adminDataStore.getTaskDetail(taskId)
+    
+    if (!task) {
+      return res.status(404).json({ success: false, message: '任务不存在' })
+    }
+
+    res.json({ success: true, data: task })
+  } catch (error) {
+    console.error('获取任务详情错误:', error)
+    res.status(500).json({ success: false, message: '服务器内部错误' })
+  }
+})
+
+app.post('/api/admin/tasks', authMiddleware, async (req: AdminRequest, res: Response) => {
+  try {
+    const task = req.body
+    const result = adminDataStore.addTask(task, req.admin!.id)
+    
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.message })
+    }
+
+    res.json({ success: true, message: '任务创建成功', taskId: result.itemId })
+  } catch (error) {
+    console.error('创建任务错误:', error)
+    res.status(500).json({ success: false, message: '服务器内部错误' })
+  }
+})
+
+app.put('/api/admin/tasks/:taskId', authMiddleware, async (req: AdminRequest, res: Response) => {
+  try {
+    const { taskId } = req.params
+    const updates = req.body
+    
+    const result = adminDataStore.updateTask(taskId, updates, req.admin!.id)
+    
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.message })
+    }
+
+    res.json({ success: true, message: '任务更新成功' })
+  } catch (error) {
+    console.error('更新任务错误:', error)
+    res.status(500).json({ success: false, message: '服务器内部错误' })
+  }
+})
+
+app.delete('/api/admin/tasks/:taskId', authMiddleware, async (req: AdminRequest, res: Response) => {
+  try {
+    const { taskId } = req.params
+    
+    const result = adminDataStore.deleteTask(taskId, req.admin!.id)
+    
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.message })
+    }
+
+    res.json({ success: true, message: '任务删除成功' })
+  } catch (error) {
+    console.error('删除任务错误:', error)
+    res.status(500).json({ success: false, message: '服务器内部错误' })
+  }
+})
+
+app.get('/api/admin/achievements', authMiddleware, async (req: AdminRequest, res: Response) => {
+  try {
+    const { page = 1, pageSize = 20, category = '', isActive = '' } = req.query as any
+    const result = adminDataStore.getAchievements({
+      page: parseInt(page),
+      pageSize: parseInt(pageSize),
+      category: category || undefined,
+      isActive: isActive !== '' ? isActive === 'true' : undefined,
+    })
+    res.json({ success: true, ...result })
+  } catch (error) {
+    console.error('获取成就列表错误:', error)
+    res.status(500).json({ success: false, message: '服务器内部错误' })
+  }
+})
+
+app.get('/api/admin/achievements/:achievementId', authMiddleware, async (req: AdminRequest, res: Response) => {
+  try {
+    const { achievementId } = req.params
+    const achievement = adminDataStore.getAchievementDetail(achievementId)
+    
+    if (!achievement) {
+      return res.status(404).json({ success: false, message: '成就不存在' })
+    }
+
+    res.json({ success: true, data: achievement })
+  } catch (error) {
+    console.error('获取成就详情错误:', error)
+    res.status(500).json({ success: false, message: '服务器内部错误' })
+  }
+})
+
+app.post('/api/admin/achievements', authMiddleware, async (req: AdminRequest, res: Response) => {
+  try {
+    const achievement = req.body
+    const result = adminDataStore.addAchievement(achievement, req.admin!.id)
+    
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.message })
+    }
+
+    res.json({ success: true, message: '成就创建成功', achievementId: result.itemId })
+  } catch (error) {
+    console.error('创建成就错误:', error)
+    res.status(500).json({ success: false, message: '服务器内部错误' })
+  }
+})
+
+app.put('/api/admin/achievements/:achievementId', authMiddleware, async (req: AdminRequest, res: Response) => {
+  try {
+    const { achievementId } = req.params
+    const updates = req.body
+    
+    const result = adminDataStore.updateAchievement(achievementId, updates, req.admin!.id)
+    
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.message })
+    }
+
+    res.json({ success: true, message: '成就更新成功' })
+  } catch (error) {
+    console.error('更新成就错误:', error)
+    res.status(500).json({ success: false, message: '服务器内部错误' })
+  }
+})
+
+app.delete('/api/admin/achievements/:achievementId', authMiddleware, async (req: AdminRequest, res: Response) => {
+  try {
+    const { achievementId } = req.params
+    
+    const result = adminDataStore.deleteAchievement(achievementId, req.admin!.id)
+    
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.message })
+    }
+
+    res.json({ success: true, message: '成就删除成功' })
+  } catch (error) {
+    console.error('删除成就错误:', error)
+    res.status(500).json({ success: false, message: '服务器内部错误' })
+  }
+})
+
+app.get('/api/admin/features', authMiddleware, async (req: AdminRequest, res: Response) => {
+  try {
+    const features = adminDataStore.getFeatureConfig()
+    res.json({ success: true, data: features })
+  } catch (error) {
+    console.error('获取玩法开关错误:', error)
+    res.status(500).json({ success: false, message: '服务器内部错误' })
+  }
+})
+
+app.put('/api/admin/features', authMiddleware, async (req: AdminRequest, res: Response) => {
+  try {
+    const config = req.body
+    const result = adminDataStore.updateFeatureConfig(config, req.admin!.id)
+    
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.message })
+    }
+
+    res.json({ success: true, message: '玩法开关更新成功' })
+  } catch (error) {
+    console.error('更新玩法开关错误:', error)
+    res.status(500).json({ success: false, message: '服务器内部错误' })
+  }
+})
+
+app.get('/api/admin/gameplay-stats', authMiddleware, async (req: AdminRequest, res: Response) => {
+  try {
+    const stats = adminDataStore.getGameplayStats()
+    res.json({ success: true, data: stats })
+  } catch (error) {
+    console.error('获取玩法统计错误:', error)
+    res.status(500).json({ success: false, message: '服务器内部错误' })
+  }
+})
+
+app.post('/api/admin/configs/:configKey/backup', authMiddleware, async (req: AdminRequest, res: Response) => {
+  try {
+    const { configKey } = req.params
+    const { data, note } = req.body
+    
+    const backup = adminDataStore.backupConfig(configKey, data, req.admin!.id, note)
+    
+    res.json({ success: true, data: backup, message: '配置备份成功' })
+  } catch (error) {
+    console.error('配置备份错误:', error)
+    res.status(500).json({ success: false, message: '服务器内部错误' })
+  }
+})
+
+app.get('/api/admin/configs/:configKey/backups', authMiddleware, async (req: AdminRequest, res: Response) => {
+  try {
+    const { configKey } = req.params
+    const backups = adminDataStore.getConfigBackups(configKey)
+    
+    res.json({ success: true, data: backups })
+  } catch (error) {
+    console.error('获取配置备份错误:', error)
+    res.status(500).json({ success: false, message: '服务器内部错误' })
+  }
+})
+
+app.get('/api/admin/configs/backups/:backupId', authMiddleware, async (req: AdminRequest, res: Response) => {
+  try {
+    const { backupId } = req.params
+    const backup = adminDataStore.getConfigBackupDetail(backupId)
+    
+    if (!backup) {
+      return res.status(404).json({ success: false, message: '备份不存在' })
+    }
+
+    res.json({ success: true, data: backup })
+  } catch (error) {
+    console.error('获取备份详情错误:', error)
+    res.status(500).json({ success: false, message: '服务器内部错误' })
+  }
+})
+
+app.post('/api/admin/configs/backups/:backupId/restore', authMiddleware, async (req: AdminRequest, res: Response) => {
+  try {
+    const { backupId } = req.params
+    
+    const result = adminDataStore.restoreConfigBackup(backupId, req.admin!.id)
+    
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.message })
+    }
+
+    res.json({ success: true, data: (result as any).data, message: '配置恢复成功' })
+  } catch (error) {
+    console.error('配置恢复错误:', error)
     res.status(500).json({ success: false, message: '服务器内部错误' })
   }
 })

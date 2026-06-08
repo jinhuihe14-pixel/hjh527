@@ -2,7 +2,8 @@ import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { 
   LayoutDashboard, Users, ShoppingBag, Settings, 
-  Gamepad2, Shield, FileText, LogOut, Crown, Activity
+  Gamepad2, Shield, FileText, LogOut, Crown, Activity,
+  CheckSquare, Trophy, Gamepad2 as GamepadIcon
 } from 'lucide-react'
 
 function Layout() {
@@ -15,7 +16,10 @@ function Layout() {
     { path: '/', label: '数据总览', icon: LayoutDashboard },
     { path: '/monitor', label: '日志监控', icon: Activity },
     { path: '/users', label: '用户管理', icon: Users },
+    { path: '/tasks', label: '任务管理', icon: CheckSquare },
+    { path: '/achievements', label: '成就管理', icon: Trophy },
     { path: '/shop', label: '商城管理', icon: ShoppingBag },
+    { path: '/gameplay', label: '玩法配置', icon: GamepadIcon },
     { path: '/configs', label: '游戏配置', icon: Settings },
     { path: '/games', label: '对局记录', icon: Gamepad2 },
     { path: '/anticheat', label: '反作弊中心', icon: Shield },

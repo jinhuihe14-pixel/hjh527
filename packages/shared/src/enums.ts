@@ -101,3 +101,52 @@ export enum MessageType {
   MATCH_FOUND = 'match_found',
   SYNC_ACK = 'sync_ack'
 }
+
+export enum TaskType {
+  DAILY = 'daily',
+  WEEKLY = 'weekly'
+}
+
+export enum TaskStatus {
+  IN_PROGRESS = 'in_progress',
+  COMPLETED = 'completed',
+  CLAIMED = 'claimed'
+}
+
+export enum TaskConditionType {
+  PLAY_GAMES = 'play_games',
+  WIN_GAMES = 'win_games',
+  GET_KILLS = 'get_kills',
+  GET_DAMAGE = 'get_damage',
+  LOGIN = 'login',
+  RANK_UP = 'rank_up',
+  COLLECT_ITEMS = 'collect_items',
+  PLAY_WITH_FRIENDS = 'play_with_friends'
+}
+
+export enum AchievementCategory {
+  PROGRESSION = 'progression',
+  COLLECTION = 'collection',
+  COMBAT = 'combat',
+  SOCIAL = 'social',
+  ACTIVITY = 'activity'
+}
+
+export enum AchievementStatus {
+  LOCKED = 'locked',
+  UNLOCKED = 'unlocked',
+  CLAIMED = 'claimed'
+}
+
+export enum LeaderboardType {
+  GLOBAL = 'global',
+  WEEKLY = 'weekly'
+}
+
+export enum GameFeature {
+  TASKS = 'tasks',
+  ACHIEVEMENTS = 'achievements',
+  WEEKLY_RANK = 'weekly_rank',
+  SHOP = 'shop',
+  RANKED = 'ranked'
+}

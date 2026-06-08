@@ -1,7 +1,8 @@
 import bcrypt from 'bcryptjs'
 import { v4 as uuidv4 } from 'uuid'
 import { generateAdminToken, AdminInfo } from '../middleware/auth'
-import { ItemRarity, ItemType, GameMode } from '@nebula/shared'
+import { ItemRarity, ItemType, GameMode, TaskType, TaskConditionType, AchievementCategory, GameFeature } from '@nebula/shared'
+import type { TaskConfig, AchievementConfig, FeatureConfig, ConfigBackup, GameplayStats } from '@nebula/shared'
 
 interface User {
   id: string
@@ -149,6 +150,16 @@ export class AdminDataStore {
   private anticheatRecords: Map<string, AnticheatRecord> = new Map()
   private auditLogs: AuditLogEntry[] = []
   private configs: Map<string, any> = new Map()
+  private taskConfigs: Map<string, TaskConfig> = new Map()
+  private achievementConfigs: Map<string, AchievementConfig> = new Map()
+  private featureConfig: FeatureConfig = {
+    [GameFeature.TASKS]: true,
+    [GameFeature.ACHIEVEMENTS]: true,
+    [GameFeature.WEEKLY_RANK]: true,
+    [GameFeature.SHOP]: true,
+    [GameFeature.RANKED]: true,
+  }
+  private configBackups: Map<string, ConfigBackup[]> = new Map()
 
   constructor() {
     this.initDefaultAdmins()
@@ -158,6 +169,8 @@ export class AdminDataStore {
     this.initDefaultGameRecords()
     this.initDefaultAnticheatRecords()
     this.initDefaultConfigs()
+    this.initDefaultTasks()
+    this.initDefaultAchievements()
   }
 
   private initDefaultAdmins() {
@@ -180,7 +193,7 @@ export class AdminDataStore {
     this.adminAccounts.set('admin_002', {
       id: 'admin_002',
       username: 'operator',
-      passwordHash2,
+      passwordHash: passwordHash2,
       nickname: '运营人员',
       role: 'operator',
       permissions: ['user.view', 'shop.view', 'game.view'],
@@ -409,33 +422,6 @@ export class AdminDataStore {
       }
     }
     return { success: false, message: '用户名或密码错误' }
-  }
-
-  getStats() {
-    const onlineUsers = Array.from(this.users.values()).filter(u => u.status === 'online').length
-    const playingUsers = Array.from(this.users.values()).filter(u => u.status === 'playing').length
-    const totalGames = this.gameRecords.size
-    const totalBanned = Array.from(this.users.values()).filter(u => u.isBanned).length
-    const todayGames = Math.floor(Math.random() * 500) + 100
-    const todayNewUsers = Math.floor(Math.random() * 50) + 10
-    const peakOnline = Math.floor(Math.random() * 2000) + 500
-
-    return {
-      totalUsers: this.users.size,
-      onlineUsers,
-      playingUsers,
-      totalGames,
-      todayGames,
-      todayNewUsers,
-      peakOnline,
-      totalBanned,
-      pendingAnticheat: Array.from(this.anticheatRecords.values()).filter(r => !r.handled).length,
-      revenue: {
-        today: Math.floor(Math.random() * 10000) + 5000,
-        week: Math.floor(Math.random() * 70000) + 30000,
-        month: Math.floor(Math.random() * 300000) + 100000,
-      },
-    }
   }
 
   getUsers(params: { page: number; pageSize: number; search?: string; status?: string }) {
@@ -684,6 +670,576 @@ export class AdminDataStore {
     const list = logs.slice(start, start + params.pageSize)
 
     return { list, total, page: params.page, pageSize: params.pageSize }
+  }
+
+  private initDefaultTasks() {
+    const dailyTasks = [
+      {
+        id: 'daily_login',
+        name: '每日签到',
+        description: '每日登录游戏',
+        type: TaskType.DAILY,
+        conditionType: TaskConditionType.LOGIN,
+        targetValue: 1,
+        rewards: [{ type: 'coins', amount: 100 }],
+        sortOrder: 1,
+        isActive: true,
+      },
+      {
+        id: 'daily_play_3',
+        name: '战斗达人',
+        description: '完成3场对局',
+        type: TaskType.DAILY,
+        conditionType: TaskConditionType.PLAY_GAMES,
+        targetValue: 3,
+        rewards: [{ type: 'coins', amount: 200 }, { type: 'exp', amount: 50 }],
+        sortOrder: 2,
+        isActive: true,
+      },
+      {
+        id: 'daily_win_1',
+        name: '首胜奖励',
+        description: '获得1场胜利',
+        type: TaskType.DAILY,
+        conditionType: TaskConditionType.WIN_GAMES,
+        targetValue: 1,
+        rewards: [{ type: 'diamonds', amount: 10 }],
+        sortOrder: 3,
+        isActive: true,
+      },
+      {
+        id: 'daily_kills_10',
+        name: '收割者',
+        description: '累计击败10名敌人',
+        type: TaskType.DAILY,
+        conditionType: TaskConditionType.GET_KILLS,
+        targetValue: 10,
+        rewards: [{ type: 'coins', amount: 150 }],
+        sortOrder: 4,
+        isActive: true,
+      },
+      {
+        id: 'daily_damage_5000',
+        name: '火力全开',
+        description: '累计造成5000点伤害',
+        type: TaskType.DAILY,
+        conditionType: TaskConditionType.GET_DAMAGE,
+        targetValue: 5000,
+        rewards: [{ type: 'exp', amount: 100 }],
+        sortOrder: 5,
+        isActive: true,
+      },
+    ]
+
+    const weeklyTasks = [
+      {
+        id: 'weekly_play_20',
+        name: '周常战斗狂人',
+        description: '本周完成20场对局',
+        type: TaskType.WEEKLY,
+        conditionType: TaskConditionType.PLAY_GAMES,
+        targetValue: 20,
+        rewards: [{ type: 'coins', amount: 1000 }, { type: 'diamonds', amount: 50 }],
+        sortOrder: 1,
+        isActive: true,
+      },
+      {
+        id: 'weekly_win_10',
+        name: '常胜将军',
+        description: '本周获得10场胜利',
+        type: TaskType.WEEKLY,
+        conditionType: TaskConditionType.WIN_GAMES,
+        targetValue: 10,
+        rewards: [{ type: 'coins', amount: 800 }, { type: 'exp', amount: 300 }],
+        sortOrder: 2,
+        isActive: true,
+      },
+      {
+        id: 'weekly_kills_50',
+        name: '百人斩',
+        description: '本周累计击败50名敌人',
+        type: TaskType.WEEKLY,
+        conditionType: TaskConditionType.GET_KILLS,
+        targetValue: 50,
+        rewards: [{ type: 'diamonds', amount: 30 }],
+        sortOrder: 3,
+        isActive: true,
+      },
+      {
+        id: 'weekly_rank_up',
+        name: '进阶之路',
+        description: '本周段位提升',
+        type: TaskType.WEEKLY,
+        conditionType: TaskConditionType.RANK_UP,
+        targetValue: 1,
+        rewards: [{ type: 'coins', amount: 500 }, { type: 'diamonds', amount: 20 }],
+        sortOrder: 4,
+        isActive: true,
+      },
+      {
+        id: 'weekly_damage_30000',
+        name: '毁灭者',
+        description: '本周累计造成30000点伤害',
+        type: TaskType.WEEKLY,
+        conditionType: TaskConditionType.GET_DAMAGE,
+        targetValue: 30000,
+        rewards: [{ type: 'exp', amount: 500 }],
+        sortOrder: 5,
+        isActive: true,
+      },
+    ]
+
+    const now = Date.now()
+    ;[...dailyTasks, ...weeklyTasks].forEach((task) => {
+      this.taskConfigs.set(task.id, {
+        ...task,
+        createdAt: now,
+        updatedAt: now,
+      } as TaskConfig)
+    })
+  }
+
+  private initDefaultAchievements() {
+    const achievements = [
+      {
+        id: 'ach_first_game',
+        name: '初出茅庐',
+        description: '完成第一场对局',
+        category: AchievementCategory.PROGRESSION,
+        conditionType: 'play_games',
+        targetValue: 1,
+        rewards: [{ type: 'coins', amount: 200 }],
+        badge: '🎮',
+        sortOrder: 1,
+        isActive: true,
+      },
+      {
+        id: 'ach_play_100',
+        name: '身经百战',
+        description: '累计完成100场对局',
+        category: AchievementCategory.PROGRESSION,
+        conditionType: 'play_games',
+        targetValue: 100,
+        rewards: [{ type: 'coins', amount: 2000 }, { type: 'title', title: '百战老兵' }],
+        badge: '⚔️',
+        sortOrder: 2,
+        isActive: true,
+      },
+      {
+        id: 'ach_win_50',
+        name: '常胜将军',
+        description: '累计获得50场胜利',
+        category: AchievementCategory.COMBAT,
+        conditionType: 'win_games',
+        targetValue: 50,
+        rewards: [{ type: 'diamonds', amount: 100 }],
+        badge: '🏆',
+        sortOrder: 3,
+        isActive: true,
+      },
+      {
+        id: 'ach_kills_100',
+        name: '百人斩',
+        description: '累计击败100名敌人',
+        category: AchievementCategory.COMBAT,
+        conditionType: 'get_kills',
+        targetValue: 100,
+        rewards: [{ type: 'coins', amount: 1000 }],
+        badge: '💀',
+        sortOrder: 4,
+        isActive: true,
+      },
+      {
+        id: 'ach_kills_1000',
+        name: '千人斩',
+        description: '累计击败1000名敌人',
+        category: AchievementCategory.COMBAT,
+        conditionType: 'get_kills',
+        targetValue: 1000,
+        rewards: [{ type: 'diamonds', amount: 500 }, { type: 'title', title: '杀戮之王' }],
+        badge: '☠️',
+        sortOrder: 5,
+        isActive: true,
+      },
+      {
+        id: 'ach_damage_100000',
+        name: '毁灭者',
+        description: '累计造成100000点伤害',
+        category: AchievementCategory.COMBAT,
+        conditionType: 'get_damage',
+        targetValue: 100000,
+        rewards: [{ type: 'coins', amount: 3000 }],
+        badge: '💥',
+        sortOrder: 6,
+        isActive: true,
+      },
+      {
+        id: 'ach_rank_bronze',
+        name: '青铜斗士',
+        description: '达到青铜段位',
+        category: AchievementCategory.PROGRESSION,
+        conditionType: 'rank_tier',
+        targetValue: 1,
+        rewards: [{ type: 'coins', amount: 300 }],
+        badge: '🥉',
+        sortOrder: 7,
+        isActive: true,
+      },
+      {
+        id: 'ach_rank_gold',
+        name: '黄金战士',
+        description: '达到黄金段位',
+        category: AchievementCategory.PROGRESSION,
+        conditionType: 'rank_tier',
+        targetValue: 3,
+        rewards: [{ type: 'diamonds', amount: 200 }, { type: 'title', title: '黄金猎手' }],
+        badge: '🥇',
+        sortOrder: 8,
+        isActive: true,
+      },
+      {
+        id: 'ach_rank_diamond',
+        name: '钻石精英',
+        description: '达到钻石段位',
+        category: AchievementCategory.PROGRESSION,
+        conditionType: 'rank_tier',
+        targetValue: 5,
+        rewards: [{ type: 'diamonds', amount: 500 }],
+        badge: '💎',
+        sortOrder: 9,
+        isActive: true,
+      },
+      {
+        id: 'ach_rank_master',
+        name: '大师风范',
+        description: '达到大师段位',
+        category: AchievementCategory.PROGRESSION,
+        conditionType: 'rank_tier',
+        targetValue: 6,
+        rewards: [{ type: 'diamonds', amount: 1000 }, { type: 'title', title: '星际大师' }],
+        badge: '👑',
+        sortOrder: 10,
+        isActive: true,
+      },
+      {
+        id: 'ach_collect_5_skins',
+        name: '收藏家',
+        description: '收集5个战机皮肤',
+        category: AchievementCategory.COLLECTION,
+        conditionType: 'collect_skins',
+        targetValue: 5,
+        rewards: [{ type: 'coins', amount: 1500 }],
+        badge: '🎨',
+        sortOrder: 11,
+        isActive: true,
+      },
+      {
+        id: 'ach_login_7_days',
+        name: '坚持不懈',
+        description: '连续登录7天',
+        category: AchievementCategory.ACTIVITY,
+        conditionType: 'consecutive_login',
+        targetValue: 7,
+        rewards: [{ type: 'diamonds', amount: 50 }],
+        badge: '📅',
+        sortOrder: 12,
+        isActive: true,
+      },
+      {
+        id: 'ach_login_30_days',
+        name: '月度达人',
+        description: '累计登录30天',
+        category: AchievementCategory.ACTIVITY,
+        conditionType: 'total_login',
+        targetValue: 30,
+        rewards: [{ type: 'coins', amount: 2000 }, { type: 'title', title: '月度达人' }],
+        badge: '🌟',
+        sortOrder: 13,
+        isActive: true,
+      },
+      {
+        id: 'ach_friends_10',
+        name: '社交达人',
+        description: '添加10个好友',
+        category: AchievementCategory.SOCIAL,
+        conditionType: 'add_friends',
+        targetValue: 10,
+        rewards: [{ type: 'coins', amount: 800 }],
+        badge: '👥',
+        sortOrder: 14,
+        isActive: true,
+      },
+      {
+        id: 'ach_win_streak_5',
+        name: '五连胜',
+        description: '连续获得5场胜利',
+        category: AchievementCategory.COMBAT,
+        conditionType: 'win_streak',
+        targetValue: 5,
+        rewards: [{ type: 'diamonds', amount: 80 }],
+        badge: '🔥',
+        sortOrder: 15,
+        isActive: true,
+      },
+    ]
+
+    const now = Date.now()
+    achievements.forEach((ach) => {
+      this.achievementConfigs.set(ach.id, {
+        ...ach,
+        createdAt: now,
+      } as AchievementConfig)
+    })
+  }
+
+  getTasks(params: { page?: number; pageSize?: number; type?: TaskType; isActive?: boolean }) {
+    let tasks = Array.from(this.taskConfigs.values())
+
+    if (params.type) {
+      tasks = tasks.filter(t => t.type === params.type)
+    }
+    if (params.isActive !== undefined) {
+      tasks = tasks.filter(t => t.isActive === params.isActive)
+    }
+
+    tasks.sort((a, b) => a.sortOrder - b.sortOrder)
+
+    const total = tasks.length
+    const page = params.page || 1
+    const pageSize = params.pageSize || 20
+    const start = (page - 1) * pageSize
+    const list = tasks.slice(start, start + pageSize)
+
+    return { list, total, page, pageSize }
+  }
+
+  getTaskDetail(taskId: string) {
+    return this.taskConfigs.get(taskId) || null
+  }
+
+  addTask(task: Partial<TaskConfig>, adminId: string): OperationResult {
+    const id = `task_${Date.now()}`
+    const now = Date.now()
+    const newTask: TaskConfig = {
+      id,
+      name: task.name || '',
+      description: task.description || '',
+      type: task.type || TaskType.DAILY,
+      conditionType: task.conditionType || TaskConditionType.PLAY_GAMES,
+      targetValue: task.targetValue || 1,
+      rewards: task.rewards || [],
+      sortOrder: task.sortOrder || this.taskConfigs.size,
+      isActive: task.isActive !== undefined ? task.isActive : true,
+      createdAt: now,
+      updatedAt: now,
+    }
+
+    this.taskConfigs.set(id, newTask)
+
+    this.addAuditLog(adminId, 'task_add', 'task', id, newTask)
+
+    return { success: true, itemId: id }
+  }
+
+  updateTask(taskId: string, updates: Partial<TaskConfig>, adminId: string) {
+    const task = this.taskConfigs.get(taskId)
+    if (!task) {
+      return { success: false, message: '任务不存在' }
+    }
+
+    Object.assign(task, updates, { updatedAt: Date.now() })
+
+    this.addAuditLog(adminId, 'task_update', 'task', taskId, updates)
+
+    return { success: true }
+  }
+
+  deleteTask(taskId: string, adminId: string) {
+    if (!this.taskConfigs.has(taskId)) {
+      return { success: false, message: '任务不存在' }
+    }
+
+    this.taskConfigs.delete(taskId)
+
+    this.addAuditLog(adminId, 'task_delete', 'task', taskId, {})
+
+    return { success: true }
+  }
+
+  getAchievements(params: { page?: number; pageSize?: number; category?: AchievementCategory; isActive?: boolean }) {
+    let achievements = Array.from(this.achievementConfigs.values())
+
+    if (params.category) {
+      achievements = achievements.filter(a => a.category === params.category)
+    }
+    if (params.isActive !== undefined) {
+      achievements = achievements.filter(a => a.isActive === params.isActive)
+    }
+
+    achievements.sort((a, b) => a.sortOrder - b.sortOrder)
+
+    const total = achievements.length
+    const page = params.page || 1
+    const pageSize = params.pageSize || 20
+    const start = (page - 1) * pageSize
+    const list = achievements.slice(start, start + pageSize)
+
+    return { list, total, page, pageSize }
+  }
+
+  getAchievementDetail(achievementId: string) {
+    return this.achievementConfigs.get(achievementId) || null
+  }
+
+  addAchievement(achievement: Partial<AchievementConfig>, adminId: string): OperationResult {
+    const id = `ach_${Date.now()}`
+    const newAchievement: AchievementConfig = {
+      id,
+      name: achievement.name || '',
+      description: achievement.description || '',
+      category: achievement.category || AchievementCategory.PROGRESSION,
+      conditionType: achievement.conditionType || 'play_games',
+      targetValue: achievement.targetValue || 1,
+      rewards: achievement.rewards || [],
+      badge: achievement.badge,
+      sortOrder: achievement.sortOrder || this.achievementConfigs.size,
+      isActive: achievement.isActive !== undefined ? achievement.isActive : true,
+      createdAt: Date.now(),
+    }
+
+    this.achievementConfigs.set(id, newAchievement)
+
+    this.addAuditLog(adminId, 'achievement_add', 'achievement', id, newAchievement)
+
+    return { success: true, itemId: id }
+  }
+
+  updateAchievement(achievementId: string, updates: Partial<AchievementConfig>, adminId: string) {
+    const achievement = this.achievementConfigs.get(achievementId)
+    if (!achievement) {
+      return { success: false, message: '成就不存在' }
+    }
+
+    Object.assign(achievement, updates)
+
+    this.addAuditLog(adminId, 'achievement_update', 'achievement', achievementId, updates)
+
+    return { success: true }
+  }
+
+  deleteAchievement(achievementId: string, adminId: string) {
+    if (!this.achievementConfigs.has(achievementId)) {
+      return { success: false, message: '成就不存在' }
+    }
+
+    this.achievementConfigs.delete(achievementId)
+
+    this.addAuditLog(adminId, 'achievement_delete', 'achievement', achievementId, {})
+
+    return { success: true }
+  }
+
+  getFeatureConfig(): FeatureConfig {
+    return { ...this.featureConfig }
+  }
+
+  updateFeatureConfig(config: Partial<FeatureConfig>, adminId: string): OperationResult {
+    Object.assign(this.featureConfig, config)
+
+    this.addAuditLog(adminId, 'feature_config_update', 'config', 'features', config)
+
+    return { success: true }
+  }
+
+  getGameplayStats(): GameplayStats {
+    const totalUsers = this.users.size
+    const activeUsers = Math.floor(totalUsers * 0.6)
+    const taskActiveUsers = Math.floor(activeUsers * 0.8)
+    const achievementActiveUsers = Math.floor(activeUsers * 0.6)
+
+    return {
+      totalTasksCompleted: Math.floor(taskActiveUsers * 2.5),
+      dailyTasksCompleted: Math.floor(taskActiveUsers * 1.8),
+      weeklyTasksCompleted: Math.floor(taskActiveUsers * 0.7),
+      totalAchievementsUnlocked: Math.floor(achievementActiveUsers * 3),
+      activeTaskUsers: taskActiveUsers,
+      activeAchievementUsers: achievementActiveUsers,
+      taskCompletionRate: Math.floor((taskActiveUsers / totalUsers) * 100) / 100,
+      achievementUnlockRate: Math.floor((achievementActiveUsers / totalUsers) * 100) / 100,
+    }
+  }
+
+  backupConfig(configKey: string, data: Record<string, any>, adminId: string, note?: string): ConfigBackup {
+    const backups = this.configBackups.get(configKey) || []
+    const version = backups.length + 1
+    const backup: ConfigBackup = {
+      id: `backup_${Date.now()}`,
+      configKey,
+      version,
+      data: JSON.parse(JSON.stringify(data)),
+      createdAt: Date.now(),
+      createdBy: adminId,
+      note,
+    }
+    backups.unshift(backup)
+    this.configBackups.set(configKey, backups)
+
+    this.addAuditLog(adminId, 'config_backup', 'config', configKey, { version, note })
+
+    return backup
+  }
+
+  getConfigBackups(configKey: string) {
+    return this.configBackups.get(configKey) || []
+  }
+
+  getConfigBackupDetail(backupId: string): ConfigBackup | null {
+    for (const backups of this.configBackups.values()) {
+      const backup = backups.find(b => b.id === backupId)
+      if (backup) return backup
+    }
+    return null
+  }
+
+  restoreConfigBackup(backupId: string, adminId: string) {
+    const backup = this.getConfigBackupDetail(backupId)
+    if (!backup) {
+      return { success: false, message: '备份不存在' }
+    }
+
+    this.addAuditLog(adminId, 'config_restore', 'config', backup.configKey, { backupId })
+
+    return { success: true, data: backup.data }
+  }
+
+  getStats() {
+    const onlineUsers = Array.from(this.users.values()).filter(u => u.status === 'online').length
+    const playingUsers = Array.from(this.users.values()).filter(u => u.status === 'playing').length
+    const totalGames = this.gameRecords.size
+    const totalBanned = Array.from(this.users.values()).filter(u => u.isBanned).length
+    const todayGames = Math.floor(Math.random() * 500) + 100
+    const todayNewUsers = Math.floor(Math.random() * 50) + 10
+    const peakOnline = Math.floor(Math.random() * 2000) + 500
+
+    const gameplayStats = this.getGameplayStats()
+
+    return {
+      totalUsers: this.users.size,
+      onlineUsers,
+      playingUsers,
+      totalGames,
+      todayGames,
+      todayNewUsers,
+      peakOnline,
+      totalBanned,
+      pendingAnticheat: Array.from(this.anticheatRecords.values()).filter(r => !r.handled).length,
+      revenue: {
+        today: Math.floor(Math.random() * 10000) + 5000,
+        week: Math.floor(Math.random() * 70000) + 30000,
+        month: Math.floor(Math.random() * 300000) + 100000,
+      },
+      gameplay: gameplayStats,
+    }
   }
 }
 

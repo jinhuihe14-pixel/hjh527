@@ -1,4 +1,4 @@
-import { RankTier, GameMode } from './enums';
+import { RankTier, GameMode, GameFeature, TaskType, TaskConditionType, AchievementCategory } from './enums';
 
 export const GAME_CONFIG = {
   TICK_RATE: 20,
@@ -133,4 +133,63 @@ export function calculateRankChange(
   }
 
   return baseChange;
+}
+
+export const DEFAULT_FEATURE_CONFIG = {
+  [GameFeature.TASKS]: true,
+  [GameFeature.ACHIEVEMENTS]: true,
+  [GameFeature.WEEKLY_RANK]: true,
+  [GameFeature.SHOP]: true,
+  [GameFeature.RANKED]: true,
+};
+
+export const TASK_CONFIG = {
+  DAILY_REFRESH_HOUR: 0,
+  WEEKLY_REFRESH_DAY: 1,
+  MAX_DAILY_TASKS: 5,
+  MAX_WEEKLY_TASKS: 5,
+};
+
+export const ACHIEVEMENT_CONFIG = {
+  MAX_DISPLAY_PER_CATEGORY: 20,
+};
+
+export const RANK_ARCHIVE_CONFIG = {
+  WEEKLY_ARCHIVE_DAY: 1,
+  WEEKLY_ARCHIVE_HOUR: 0,
+  MAX_ARCHIVED_WEEKS: 52,
+};
+
+export function getDailyPeriodKey(date: Date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function getWeeklyPeriodKey(date: Date = new Date()): string {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const dayNum = String(d.getDate()).padStart(2, '0');
+  return `${year}-W${Math.ceil((d.getDate() + new Date(d.getFullYear(), d.getMonth(), 1).getDay()) / 7)}`;
+}
+
+export function isNewWeek(lastRefresh: number): boolean {
+  const now = new Date();
+  const last = new Date(lastRefresh);
+  const nowWeek = getWeeklyPeriodKey(now);
+  const lastWeek = getWeeklyPeriodKey(last);
+  return nowWeek !== lastWeek;
+}
+
+export function isNewDay(lastRefresh: number): boolean {
+  const now = new Date();
+  const last = new Date(lastRefresh);
+  const nowDay = getDailyPeriodKey(now);
+  const lastDay = getDailyPeriodKey(last);
+  return nowDay !== lastDay;
 }

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { DataStore } from '../../data/DataStore';
-import { RankTier, getRankTier, RANK_CONFIG } from '@nebula/shared';
+import { RankTier, getRankTier, RANK_CONFIG, LeaderboardType, GameFeature } from '@nebula/shared';
 
 const router = Router();
 
@@ -73,25 +73,85 @@ router.get('/leaderboard', (req: AuthRequest, res: Response) => {
   const dataStore = req.dataStore!;
   const { limit = 50, offset = 0, type = 'global' } = req.query;
 
-  const leaderboard = dataStore.getLeaderboard(
-    Math.min(100, parseInt(limit as string)),
-    parseInt(offset as string)
-  );
+  const leaderboardType = type as LeaderboardType;
 
-  const userId = req.userId!;
-  const myRank = dataStore.getUserRank(userId);
-  const myRecord = dataStore.getRankRecord(userId);
+  if (leaderboardType === LeaderboardType.WEEKLY && !dataStore.isFeatureEnabled(GameFeature.WEEKLY_RANK)) {
+    return res.status(403).json({ error: '周榜功能暂未开启' });
+  }
 
-  res.json({
-    leaderboard,
-    total: leaderboard.length,
-    mine: myRank > 0
+  let leaderboard;
+  let total;
+  let mine;
+
+  if (leaderboardType === LeaderboardType.WEEKLY) {
+    leaderboard = dataStore.getWeeklyLeaderboard(
+      Math.min(100, parseInt(limit as string)),
+      parseInt(offset as string)
+    );
+    total = leaderboard.length;
+    const userId = req.userId!;
+    const myRank = dataStore.getUserWeeklyRank(userId);
+    const myRecord = dataStore.getRankRecord(userId);
+    const weekPoints = dataStore.getWeeklyLeaderboard(1000, 0).find(e => e.userId === userId)?.weekPoints || 0;
+    mine = myRank > 0
+      ? {
+          rank: myRank,
+          points: weekPoints,
+          tier: myRecord?.rankTier || RankTier.BRONZE,
+        }
+      : null;
+  } else {
+    leaderboard = dataStore.getLeaderboard(
+      Math.min(100, parseInt(limit as string)),
+      parseInt(offset as string)
+    );
+    total = leaderboard.length;
+    const userId = req.userId!;
+    const myRank = dataStore.getUserRank(userId);
+    const myRecord = dataStore.getRankRecord(userId);
+    mine = myRank > 0
       ? {
           rank: myRank,
           points: myRecord?.rankPoints || 0,
           tier: myRecord?.rankTier || RankTier.BRONZE,
         }
-      : null,
+      : null;
+  }
+
+  res.json({
+    leaderboard,
+    total,
+    type: leaderboardType,
+    mine,
+  });
+});
+
+router.get('/archives', (req: AuthRequest, res: Response) => {
+  const dataStore = req.dataStore!;
+  const { periodType } = req.query;
+
+  const archives = dataStore.getRankArchives(
+    periodType as 'weekly' | 'monthly' | 'seasonal' | undefined
+  );
+
+  res.json({
+    archives,
+    total: archives.length,
+  });
+});
+
+router.get('/archives/:archiveId', (req: AuthRequest, res: Response) => {
+  const dataStore = req.dataStore!;
+  const { archiveId } = req.params;
+
+  const archive = dataStore.getRankArchive(archiveId);
+
+  if (!archive) {
+    return res.status(404).json({ error: '归档不存在' });
+  }
+
+  res.json({
+    archive,
   });
 });
 

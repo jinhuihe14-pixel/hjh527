@@ -5,6 +5,8 @@ import { userRouter } from './modules/user/user.routes';
 import { shopRouter } from './modules/shop/shop.routes';
 import { rankRouter } from './modules/rank/rank.routes';
 import { seasonRouter } from './modules/season/season.routes';
+import { taskRouter } from './modules/task/task.routes';
+import { achievementRouter } from './modules/achievement/achievement.routes';
 import { authMiddleware } from './middleware/auth';
 import { DataStore } from './data/DataStore';
 
@@ -32,6 +34,8 @@ app.use('/api/user', userRouter);
 app.use('/api/shop', authMiddleware, shopRouter);
 app.use('/api/rank', authMiddleware, rankRouter);
 app.use('/api/season', authMiddleware, seasonRouter);
+app.use('/api/task', authMiddleware, taskRouter);
+app.use('/api/achievement', authMiddleware, achievementRouter);
 
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('[API Error]', err);
@@ -41,12 +45,13 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-const PORT = process.env.API_SERVER_PORT || 3003;
+const PORT = Number(process.env.API_SERVER_PORT) || 3003;
+const HOST = process.env.API_SERVER_HOST || '0.0.0.0';
 
-app.listen(PORT, () => {
-  console.log(`📡 API Server running on port ${PORT}`);
-  console.log(`   API: http://localhost:${PORT}/api`);
-  console.log(`   Health: http://localhost:${PORT}/health`);
+app.listen(PORT, HOST, () => {
+  console.log(`📡 API Server running on ${HOST}:${PORT}`);
+  console.log(`   API: http://${HOST}:${PORT}/api`);
+  console.log(`   Health: http://${HOST}:${PORT}/health`);
 });
 
 export { app, dataStore };
