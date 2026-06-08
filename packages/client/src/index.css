@@ -1,0 +1,302 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Rajdhani', system-ui, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #e8ecff;
+  background-color: #0a0e27;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0a0e27 100%);
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* 星空背景 */
+.stars-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.stars-bg::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, #fff, transparent),
+    radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent),
+    radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+    radial-gradient(2px 2px at 160px 120px, rgba(0,240,255,0.6), transparent),
+    radial-gradient(1px 1px at 230px 80px, #fff, transparent),
+    radial-gradient(2px 2px at 300px 150px, rgba(255,0,255,0.4), transparent);
+  background-repeat: repeat;
+  background-size: 350px 200px;
+  animation: twinkle 4s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* 霓虹文字效果 */
+.neon-text {
+  text-shadow: 
+    0 0 5px currentColor,
+    0 0 10px currentColor,
+    0 0 20px currentColor,
+    0 0 40px currentColor;
+}
+
+.neon-text-sm {
+  text-shadow: 
+    0 0 2px currentColor,
+    0 0 5px currentColor,
+    0 0 10px currentColor;
+}
+
+/* 玻璃质感卡片 */
+.glass-card {
+  background: rgba(26, 31, 58, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: 12px;
+}
+
+.glass-card-hover {
+  transition: all 0.3s ease;
+}
+
+.glass-card-hover:hover {
+  border-color: rgba(0, 240, 255, 0.5);
+  box-shadow: 
+    0 0 20px rgba(0, 240, 255, 0.2),
+    inset 0 0 20px rgba(0, 240, 255, 0.05);
+  transform: translateY(-2px);
+}
+
+/* 霓虹按钮 */
+.neon-btn {
+  position: relative;
+  padding: 12px 32px;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.1);
+  border: 2px solid #00f0ff;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.neon-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.neon-btn:hover {
+  color: #0a0e27;
+  background: #00f0ff;
+  box-shadow: 
+    0 0 10px #00f0ff,
+    0 0 20px #00f0ff,
+    0 0 40px #00f0ff;
+}
+
+.neon-btn:hover::before {
+  left: 100%;
+}
+
+.neon-btn:active {
+  transform: scale(0.98);
+}
+
+.neon-btn-primary {
+  color: #0a0e27;
+  background: linear-gradient(135deg, #00f0ff, #8b5cf6);
+  border: none;
+}
+
+.neon-btn-primary:hover {
+  box-shadow: 
+    0 0 20px rgba(0, 240, 255, 0.6),
+    0 0 40px rgba(139, 92, 246, 0.4);
+}
+
+.neon-btn-danger {
+  color: #ff3366;
+  background: rgba(255, 51, 102, 0.1);
+  border-color: #ff3366;
+}
+
+.neon-btn-danger:hover {
+  color: #0a0e27;
+  background: #ff3366;
+  box-shadow: 
+    0 0 10px #ff3366,
+    0 0 20px #ff3366;
+}
+
+.neon-btn-success {
+  color: #00ff88;
+  background: rgba(0, 255, 136, 0.1);
+  border-color: #00ff88;
+}
+
+.neon-btn-success:hover {
+  color: #0a0e27;
+  background: #00ff88;
+  box-shadow: 
+    0 0 10px #00ff88,
+    0 0 20px #00ff88;
+}
+
+/* 霓虹边框 */
+.neon-border {
+  border: 2px solid rgba(0, 240, 255, 0.3);
+  box-shadow: 
+    0 0 5px rgba(0, 240, 255, 0.2),
+    inset 0 0 5px rgba(0, 240, 255, 0.1);
+}
+
+.neon-border-pink {
+  border-color: rgba(255, 0, 255, 0.3);
+  box-shadow: 
+    0 0 5px rgba(255, 0, 255, 0.2),
+    inset 0 0 5px rgba(255, 0, 255, 0.1);
+}
+
+/* 进度条 */
+.neon-progress-bar {
+  height: 8px;
+  background: rgba(0, 240, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.neon-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00f0ff, #8b5cf6);
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+  transition: width 0.3s ease;
+}
+
+/* 滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(26, 31, 58, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 240, 255, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 240, 255, 0.5);
+}
+
+/* 输入框 */
+.neon-input {
+  padding: 10px 16px;
+  background: rgba(10, 14, 39, 0.8);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 8px;
+  color: #e8ecff;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.neon-input:focus {
+  border-color: #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+.neon-input::placeholder {
+  color: #8892c4;
+}
+
+/* 动画 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.animate-slideInLeft {
+  animation: slideInLeft 0.5s ease forwards;
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.5s ease forwards;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.3s ease forwards;
+}
+
+/* Orbitron字体类 */
+.font-orbitron {
+  font-family: 'Orbitron', sans-serif;
+}
+
+.font-rajdhani {
+  font-family: 'Rajdhani', sans-serif;
+}

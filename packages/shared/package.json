@@ -1,0 +1,12 @@
+{
+  "name": "@nebula/shared",
+  "version": "1.0.0",
+  "description": "星云竞技场共享模块",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {}
+}
